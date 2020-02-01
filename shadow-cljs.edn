@@ -3,7 +3,8 @@
  ["src"]
  
  :dependencies
- [[reagent "0.8.1" :exclusions [cljsjs/react cljsjs/react-dom]]]
+ [[reagent "0.8.1" :exclusions [cljsjs/react cljsjs/react-dom]]
+  [cljs-bean "1.5.0"]]
  
  :builds
  {:main
@@ -18,6 +19,8 @@
   {:target :browser
    :output-dir "app/js"
    :asset-path "js"
+   
+   :js-options {:js-provider :require}
    
    :modules
    {:renderer {:entries [example.renderer]}}

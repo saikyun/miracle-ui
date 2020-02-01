@@ -32,12 +32,6 @@
     
     (.. win -webContents (openDevTools))
     
-    (.addDevToolsExtension
-     BrowserWindow
-     (path/join
-      (.homedir os)
-      "/Library/Application Support/Google/Chrome/Profile 2/Extensions/fmkadmapgofadopljbjfkapdkoienihi/3.6.0_0"))
-    
     (reset! win-ref win)
     
     (.on win "closed"
