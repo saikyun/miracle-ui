@@ -48,8 +48,8 @@
                 (:in-string state)
                 (:escape-next state))
           {:error "String ended in unfinished state."
-           :remaining cs
-           :state state}
+           :remaining s
+           :state (assoc state :validated "")}
           {:well-formed (:validated state)})
         
         (:escape-next state)        
@@ -101,8 +101,8 @@
           {:error (if (seq (:stack state))
                     "Closing wrong kind of list."
                     "Closing list though there are no open lists.")
-           :state (push-c state)
-           :remaining cs})        
+           :state (assoc (push-c state) :validated "")
+           :remaining s})
         
         :else (recur cs (push-c state)))))
   )

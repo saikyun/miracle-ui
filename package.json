@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "watch": "shadow-cljs watch main renderer"
+    "watch": "shadow-cljs watch main renderer test-stuff"
   },
   "devDependencies": {
     "electron": "^7.1.11",

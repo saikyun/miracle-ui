@@ -28,4 +28,11 @@
    :devtools
    {:before-load example.renderer/stop
     :after-load example.renderer/start}}
-  }}
+  
+  :test-stuff
+  {:target :node-script
+   :output-to "test_stuff/main.js"
+   :main test-stuff.core/main
+   :devtools
+   {:before-load test-stuff.core/stop
+    :after-load test-stuff.core/start}}}}
