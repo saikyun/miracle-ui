@@ -1,7 +1,5 @@
 (ns example.eval)
 
-(enable-console-print!)
-
 (defonce id (atom 0))
 (defn id!
   []
