@@ -5,7 +5,7 @@ A tool that connects to a socket-repl, watches all functions in a namespace, fil
 ## Usage
 
 ```
-git clone https://github.com/Saikyun/miracle.ui miracle-ui
+git clone https://github.com/Saikyun/miracle-ui
 cd miracle-ui
 yarn
 
