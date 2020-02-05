@@ -3,6 +3,7 @@
             [reagent.core :as r]
             ["react-split-pane" :as SplitPane]
             ["net" :as net]
+            ["fs" :as fs]
             
             [cljs-bean.core :refer [bean]]
             [example.edn-validator :refer [validate]]
@@ -17,7 +18,7 @@
             [miracle.save :refer-macros [save]]
             [example.eval :refer [eval-str!] :refer-macros [eval! raw-eval!]]))
 
-(defonce c (.connect net #js {:port 51414 :host "localhost"}))
+(defonce c nil)
 
 (defonce timer (atom nil))
 
@@ -27,6 +28,8 @@
 
 (defonce save-keys (r/atom []))
 (defonce current-key (r/atom nil))
+
+(def watched-nses (r/atom #{}))
 
 (defn parse!
   [parsed]
@@ -102,16 +105,17 @@
       :save-keys (reset! save-keys (into [] data))
       :bounce (eval-str! c (pr-str data))
       :get-key (reset! current-key data)
+      :watching (swap! watched-nses conj (:ns data))
       (reset! last-res m))))
 
 (defn handle-chunk!
   [c]
   (let [s (.toString c)]
-    #_ (println ";;=>" 
-                (subs s 0 100)
-                (when (seq (subs s 100 101))
-                  (str "\n...\n"
-                       (apply str (take-last 100 s)))))
+    (println ";;=>" 
+             (subs s 0 100)
+             (when (seq (subs s 100 101))
+               (str "\n...\n"
+                    (apply str (take-last 100 s)))))
     #_ (println "got chunk" s)
     (swap! buffer
            (fn [buffer]
@@ -317,16 +321,15 @@
   (.preventDefault ev)
   (eval-str! c @eval-s))
 
-(def watch-s (r/atom ""))
+(defonce watch-s (r/atom ""))
 
 (defn watch-ns
   [ev]
-  (.preventDefault ev) (eval-str! c (str "{:command :bounce, :data {:command :bounce, :data (watch-ns-form '" @watch-s ")}}")))
+  (.preventDefault ev) (eval-str! c (str "{:command :bounce, :data {:command :bounce, :data {:command :watching, :data {:ns \"" @watch-s "\", :watch (miracle.save/watch-ns-form '" @watch-s ")}}}}")))
 
 (defn main
   []
   [:<>
-   [:p "Selected context: " @context]
    (comment
      [:form {:on-submit submit-eval}
       [:input {:type "text"
@@ -344,6 +347,15 @@
              :on-change #(reset! watch-s (.. % -target -value))}]
     [:button {:type "submit"
               :class "button"} "Watch ns"]]
+
+   (when-let [nses (some->> @watched-nses
+                            seq
+                            (str/join ", "))]
+     [:p "Watched nses: " nses])
+   
+   (when-let [c @context]
+     [:p "Selected context: " c])
+
    [both-panes]])
 
 (defn start []
@@ -355,11 +367,17 @@
 
 (defn init []
   (js/console.log "renderer - init")
-  (.on c "data" (fn [chunk] (handle-chunk! chunk)))
-  (raw-eval! c :cljs/quit)
-  #_  (eval! c :cljs/quit)
-  (eval! c (shadow/repl :test-stuff))
-  (start))
+  (.readFile
+   fs "./.shadow-cljs/socket-repl.port" "utf8"
+   (fn [err data]
+     (let [port (read/read-string data)]
+       (set! c (.connect net #js {:port port :host "localhost"}))  
+       
+       (.on c "data" (fn [chunk] (handle-chunk! chunk)))  
+       (raw-eval! c :cljs/quit)  
+       #_  (eval! c :cljs/quit)  
+       (eval! c (shadow/repl :test-stuff))  
+       (start)))))
 
 (defn stop []
   (js/console.log "renderer - stop"))
