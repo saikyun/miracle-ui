@@ -2,9 +2,7 @@
 {:source-paths
  ["src"]
  
- :dependencies
- [[reagent "0.8.1" :exclusions [cljsjs/react cljsjs/react-dom]]
-  [cljs-bean "1.5.0"]]
+ :deps true 
  
  :builds
  {:main
@@ -27,7 +25,8 @@
    
    :devtools
    {:before-load example.renderer/stop
-    :after-load example.renderer/start}}
+    :after-load example.renderer/start
+    :devtools {:watch-dir "app/css"}}}
   
   :test-stuff
   {:target :node-script

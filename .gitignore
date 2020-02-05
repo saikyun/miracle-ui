@@ -3,3 +3,5 @@ app/js/
 target/
 node_modules/
 .shadow-cljs/
+test_stuff/
+.cpcache/

@@ -3,6 +3,7 @@
             [reagent.core :as r]
             ["react-split-pane" :as SplitPane]
             ["net" :as net]
+            
             [cljs-bean.core :refer [bean]]
             [example.edn-validator :refer [validate]]
             
@@ -16,7 +17,9 @@
             [miracle.save :refer-macros [save]]
             [example.eval :refer [eval-str!] :refer-macros [eval! raw-eval!]]))
 
-(defonce c (.connect net #js {:port 50885, :host "localhost"}))
+(defonce c (.connect net #js {:port 51414 :host "localhost"}))
+
+(defonce timer (atom nil))
 
 (def buffer (atom ""))
 (def validated [])
@@ -33,9 +36,9 @@
 
 (comment
   (def s "{:command :get-key, :data [[776 {:miracle.save/ret 1, :miracle.save/args {coll [1 2 3], n 0}, :miracle.save/arglist (coll n)}] [777 {:miracle.save/ret 1, :miracle.save/args {coll [1 2 3], n 0}, :miracle.save/arglist (coll n)}] [778 {:miracle.save/error #object[Error Error: No item 5 in vector of length 3], :miracle.save/args {coll [1 2 3], n 5}, :miracle.save/arglist (coll n)}] [783 {:miracle.save/ret 1, :miracle.save/args {coll [1 2 3], n 0}, :miracle.save/arglist [coll n]}] [784 {:miracle.save/error #object[Error Error: No item 5 in vector of length 3], :miracle.save/args {coll [1 2 3], n 5}, :miracle.save/arglist [coll n]}]]}")
-
+  
   (def s2 "#object[Error Error: No item 5 in vector of length 3]")
-
+  
   ((partial
     read/read-string 
     {:default (fn [tag v] (str "#" tag v))
@@ -77,6 +80,13 @@
   
   )
 
+(def last-res (r/atom nil))
+
+(comment
+
+  {:command :bounce, :data (watch-ns-form 'test-stuff.core)}
+  )
+
 
 (defn handle-parsed!
   [parsed]
@@ -87,21 +97,21 @@
                 {:default (fn [tag v] (str "#" tag v))
                  :readers {'Error (fn [v] (first v))}}) 
                (filter some? (map :res parsed)))]
-    (println "parsing!")
     (save :que-m)
     (case command
       :save-keys (reset! save-keys (into [] data))
-      :get-key (do (println "GOT KEY!") (reset! current-key data))
-      :nope)))
+      :bounce (eval-str! c (pr-str data))
+      :get-key (reset! current-key data)
+      (reset! last-res m))))
 
 (defn handle-chunk!
   [c]
   (let [s (.toString c)]
-    (println ";;=>" 
-             (subs s 0 100)
-             (when (seq (subs s 100 101))
-               (str "\n...\n"
-                    (apply str (take-last 100 s)))))
+    #_ (println ";;=>" 
+                (subs s 0 100)
+                (when (seq (subs s 100 101))
+                  (str "\n...\n"
+                       (apply str (take-last 100 s)))))
     #_ (println "got chunk" s)
     (swap! buffer
            (fn [buffer]
@@ -164,27 +174,93 @@
   []
   (eval! c {:command :save-keys, :data (filter symbol? (keys @miracle.save/saves))}))
 
+
 (defn show-saves!
   [k]
   (save :yee)
-  (eval-str! c (str "{:command :get-key, :data (get @miracle.save/saves " 
-                    (if (symbol? k)
-                      (str "'" k)
-                      k) ")}")))
+  (let [k-str (if (symbol? k)
+                (str "'" k)
+                k)]
+    (eval-str! c (str "{:command :get-key, :data {:key " k-str ", :vals (get @miracle.save/saves " 
+                      k-str ")}}"))))
 
-(defonce selected-date (r/atom nil))
+(defn refresh-current-key!
+  []
+  (when-let [k (:key @current-key)]
+    (show-saves! k)))
+
+(defn refresh!
+  []
+  (refresh-current-key!)
+  (get-keys!)
+  
+  (when-let [t @timer]
+    (js/clearTimeout t))  
+  
+  (reset! timer (js/setTimeout refresh! 1000)))
+
+(defn key-button
+  [k]
+  [:li {:key k}
+   [:button {:on-click #(show-saves! k)
+             :class "button"} (str k)]])
 
 (defn left
   []
   [:div
-   [:button {:on-click get-keys!}
+   [:button {:on-click get-keys!
+             :class "button"}
     "Get keys"]
    [:ul
-    (doall (map (fn [k] [:li {:key k} [:button {:on-click #(show-saves! k)} k]]) @save-keys))]])
+    (doall (map key-button @save-keys))]])
+
+(def context (r/atom nil))
+(add-watch 
+ context 
+ :set-miracle-context
+ (fn [_ _ _ {:keys [key id]}]
+   (let [key-str (if (symbol? key)
+                   (str "'" key)
+                   (str key))]
+     (eval-str! c 
+                (str
+                 "(miracle.save/set-context! {:key " key-str ",
+:id " id "})")))))
+
+(defn inspect-row
+  [current-key headers [row-id data]]
+  (let [inspecting-k (:key current-key)]
+    [:tr
+     {:key row-id
+      :class 
+      (str "selectable"
+           (when (and (= inspecting-k (:key @context))
+                      (= row-id (:id @context)))
+             " is-selected"))
+      :on-click #(reset! context {:key inspecting-k
+                                  :id row-id})}
+     [:td row-id]
+     (doall 
+      (map
+       (fn [k] [:td {:key k} (some-> (get data k) (subs 0 100))])
+       headers))]))
 
 (defn right
   [filters]
-  (let [headers (sort (distinct (mapcat (comp keys second) (take 100 @current-key))))
+  (let [inspecting-k (:key @current-key)
+        massaged (map (fn [[k v]] [k (assoc (:miracle.save/args v)
+                                            :miracle.save/ret
+                                            (:miracle.save/ret v)
+                                            
+                                            :miracle.save/error
+                                            (:miracle.save/error v))]) (:vals @current-key))
+        headers (into []
+                      (sort-by
+                       str
+                       (distinct 
+                        (mapcat 
+                         (comp keys second) 
+                         (take 100 massaged)))))
         cols
         (filter
          (fn [[_ data]]
@@ -202,45 +278,79 @@
          (map
           (fn [[k v]]
             [k (into {} (map (fn [[i-k i-v]] [i-k (str i-v)]) v))])
-          @current-key))]
-    (save :yehtue-2)
-    [:div [:table
-           [:thead
-            [:tr
-             [:td "id"]
-             (doall (map (fn [k] [:td {:key k} (str "- " k " -")])
-                         headers))]]
-           [:tbody
-            [:tr
-             [:td {:key "k"}]
-             (doall (map 
-                     (fn [k]
-                       [:td 
-                        {:key k}
-                        [:input {:type "text"
-                                 :value (get @filters k)
-                                 :on-change #(swap! filters assoc k (.. % -target -value))}]])
-                     headers))]]
-           (doall (map 
-                   (fn [[row-id data]]
-                     [:tr
-                      {:key row-id}
-                      [:td row-id]
-                      (doall 
-                       (map
-                        (fn [k] [:td {:key k} (some-> (get data k) (subs 0 100))])
-                        headers))])
-                   cols))]]))
+          massaged))]
+    [:div {:class "container"}
+     [:h2 (str "inspecting `" inspecting-k "`")]
+     [:table {:class "table"}
+      [:thead
+       [:tr
+        [:td "id"]
+        (doall (map (fn [k] [:td {:key k} (str "- " k " -")])
+                    headers))]]
+      [:tbody
+       [:tr
+        [:td {:key "k"}]
+        (doall (map 
+                (fn [k]
+                  [:td 
+                   {:key k}
+                   [:input {:type "text"
+                            :class "input"
+                            :value (get @filters k)
+                            :on-change #(swap! filters assoc k (.. % -target -value))}]])
+                headers))]
+       (doall (map (partial inspect-row
+                            @current-key
+                            headers)
+                   cols))]]]))
 
 (defn both-panes []
-  [(r/adapt-react-class SplitPane)
+  [:> SplitPane
    {:minSize 300}
    [left]
    [right (r/atom {})]])
 
+(def eval-s (r/atom ""))
+
+(defn submit-eval
+  [ev]
+  (.preventDefault ev)
+  (eval-str! c @eval-s))
+
+(def watch-s (r/atom ""))
+
+(defn watch-ns
+  [ev]
+  (.preventDefault ev) (eval-str! c (str "{:command :bounce, :data {:command :bounce, :data (watch-ns-form '" @watch-s ")}}")))
+
+(defn main
+  []
+  [:<>
+   [:p "Selected context: " @context]
+   (comment
+     [:form {:on-submit submit-eval}
+      [:input {:type "text"
+               :class "input"
+               :value @eval-s
+               :on-change #(reset! eval-s (.. % -target -value))}]
+      [:button {:type "submit"
+                :class "button"} "Eval"]]
+     [:p "Last res: " @last-res])
+   
+   [:form {:on-submit watch-ns}
+    [:input {:type "text"
+             :class "input"
+             :value @watch-s
+             :on-change #(reset! watch-s (.. % -target -value))}]
+    [:button {:type "submit"
+              :class "button"} "Watch ns"]]
+   [both-panes]])
+
 (defn start []
   (js/console.log "renderer - start")
-  (r/render [both-panes]
+  (refresh!)
+  (get-keys!)
+  (r/render [main]
             (.getElementById js/document "app")))
 
 (defn init []
@@ -248,7 +358,7 @@
   (.on c "data" (fn [chunk] (handle-chunk! chunk)))
   (raw-eval! c :cljs/quit)
   #_  (eval! c :cljs/quit)
-  #_    (eval! c (shadow/repl :renderer))
+  (eval! c (shadow/repl :test-stuff))
   (start))
 
 (defn stop []

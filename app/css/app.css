@@ -1,5 +1,18 @@
-* {
-    padding: 0px;
-    margin: 0px;
+.selectable:hover, .selectable td:hover {
+    cursor: pointer;
+    background: #eeeeee;
 }
 
+.selectable td:hover {
+    background: #dddddd;
+}
+
+.is-selected:hover, .is-selected td:hover {
+    cursor: pointer;
+    background: #00e1c2;
+}
+
+
+.selected, .selected td, .selected td:hover {
+    background: #aaeeee;
+}

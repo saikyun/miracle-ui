@@ -164,6 +164,11 @@ builtin-status-codes@^3.0.0:
   resolved "https://registry.yarnpkg.com/builtin-status-codes/-/builtin-status-codes-3.0.0.tgz#85982878e21b98e1c66425e03d0174788f569ee8"
   integrity sha1-hZgoeOIbmOHGZCXgPQF0eI9Wnug=
 
+bulma@^0.8.0:
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/bulma/-/bulma-0.8.0.tgz#ac1606431703a4761b18a4a2d5cc1fa864a2aece"
+  integrity sha512-nhf3rGyiZh/VM7FrSJ/5KeLlfaFkXz0nYcXriynfPH4vVpnxnqyEwaNGdNCVzHyyCA3cHgkQAMpdF/SFbFGZfA==
+
 cacheable-request@^6.0.0:
   version "6.1.0"
   resolved "https://registry.yarnpkg.com/cacheable-request/-/cacheable-request-6.1.0.tgz#20ffb8bd162ba4be11e9567d823db651052ca912"
@@ -486,13 +491,6 @@ get-stream@^5.1.0:
   dependencies:
     pump "^3.0.0"
 
-get-user-locale@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/get-user-locale/-/get-user-locale-1.1.1.tgz#edff0a8bbd6aa3ed0ca30cc441e1acd111543b7f"
-  integrity sha512-KuA+vMhsY+rSPK8hrmOvf7xXIMTs+L06RkgZ83jawZHSEqPLafZtQ63d3waXW3r8z6EQ49I/trraNncWM+s/2g==
-  dependencies:
-    lodash.once "^4.1.1"
-
 global-agent@^2.0.2:
   version "2.1.7"
   resolved "https://registry.yarnpkg.com/global-agent/-/global-agent-2.1.7.tgz#12d7bc2b07cd862d0fa76b0f1b2c48cd5ffcf150"
@@ -669,11 +667,6 @@ keyv@^3.0.0:
   dependencies:
     json-buffer "3.0.0"
 
-lodash.once@^4.1.1:
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/lodash.once/-/lodash.once-4.1.1.tgz#0dd3971213c7c56df880977d504c88fb471a97ac"
-  integrity sha1-DdOXEhPHxW34gJd9UEyI+0cal6w=
-
 lodash@^4.17.10:
   version "4.17.15"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.15.tgz#b447f6670a0455bbfeedd11392eff330ea097548"
@@ -711,11 +704,6 @@ md5.js@^1.3.4:
     hash-base "^3.0.0"
     inherits "^2.0.1"
     safe-buffer "^5.1.2"
-
-merge-class-names@^1.1.1:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/merge-class-names/-/merge-class-names-1.2.0.tgz#cb30ecfc3bdbd96b6f76d0a98777907e5fbb3462"
-  integrity sha512-ifHxhC8DojHT1rG3PHCaJYInUqPd0WO+PxsaYDMkgy7RzfyOFtnlpr/hbhki+m/3R/ujIRVnZkD/AHjgjb5uhg==
 
 miller-rabin@^4.0.0:
   version "4.0.1"
@@ -904,7 +892,7 @@ promise@^7.1.1:
   dependencies:
     asap "~2.0.3"
 
-prop-types@^15.5.10, prop-types@^15.5.4, prop-types@^15.6.0, prop-types@^15.6.2:
+prop-types@^15.5.10, prop-types@^15.5.4, prop-types@^15.6.2:
   version "15.7.2"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.7.2.tgz#52c41e75b8c87e72b9d9360e0206b99dcbffa6c5"
   integrity sha512-8QQikdH7//R2vurIJSutZ1smHYTcLpRWEOlHnzcWHmBYrOGUysKwSsrC89BCiFj3CbrfJ/nXFdJepOVrY1GCHQ==
@@ -972,16 +960,6 @@ randomfill@^1.0.3:
   dependencies:
     randombytes "^2.0.5"
     safe-buffer "^5.1.0"
-
-react-calendar@^2.19.0:
-  version "2.19.0"
-  resolved "https://registry.yarnpkg.com/react-calendar/-/react-calendar-2.19.0.tgz#5451927c4a8f2136b9732c348bb27f3b91c032b0"
-  integrity sha512-vfmOuYSSzrWmJPJBH2WMLU7mVDPjhslawGBe2VYauN0tzEUt/cX/zsOLC+/PxH+3vD7dG4R7gpspl/q7L850sw==
-  dependencies:
-    get-user-locale "^1.1.1"
-    merge-class-names "^1.1.1"
-    prop-types "^15.6.0"
-    react-lifecycles-compat "^3.0.4"
 
 react-dom@^16.8.6:
   version "16.8.6"
