@@ -1,6 +1,7 @@
 {:paths ["src"]
  
- :deps {miracle.save {:git/url "https://github.com/Saikyun/miracle.save.cljs"}
+ :deps {miracle.save {:git/url "https://github.com/Saikyun/miracle.save.cljs"
+                      :sha "3ce0699cd23ddc5754f36f8635dfeba474dfc8ea"}
         reagent {:mvn/version "0.8.1"}
         thheller/shadow-cljs {:mvn/version "2.8.83"}
         cljs-bean {:mvn/version "1.5.0"}}}
